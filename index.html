@@ -1,0 +1,2414 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nanom AI Studio</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=Tajawal:wght@300;400;500;700&family=Courier+Prime&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+    <!-- Prism Syntax Highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" rel="stylesheet" />
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+    <!-- Morphing Background Blobs -->
+    <div class="background-container">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+        <div class="glass-overlay"></div>
+    </div>
+
+    <!-- Search Popup for Collapsed Sidebar -->
+    <div id="search-popup" class="search-modal-popup">
+        <input type="text" placeholder="Search sessions..." id="search-popup-input">
+        <div id="search-popup-results" class="search-results custom-scrollbar"></div>
+    </div>
+
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <!-- Search Capsule -->
+                <div class="search-capsule">
+                    <span class="search-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </span>
+                    <input type="text" placeholder="Search" class="search-input" data-i18n-placeholder="sidebar.search">
+                </div>
+                <!-- Sidebar Toggle Removed for Static Behavior -->
+            </div>
+
+            <div class="sidebar-actions">
+                <button id="new-chat-btn" class="new-chat-btn-advanced">
+                    <span class="icon-plus">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </span>
+                    <span class="text-label" data-i18n="sidebar.new_chat">New Chat</span>
+                </button>
+            </div>
+
+            <div class="sidebar-content custom-scrollbar" id="sessions-list">
+                <!-- Sessions will be loaded dynamically from Supabase -->
+                <div class="empty-sessions-msg"
+                    style="padding: 20px; text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
+                    No recent chats. Start a new one!
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="footer-btn" title="Library">
+                    <span class="icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
+                    </span>
+                    <span class="label" data-i18n="sidebar.library">Library</span>
+                </div>
+
+                <!-- Login/Profile Section -->
+                <div class="user-profile" id="sidebar-auth-btn"
+                    onclick="window.forceShowAuthModal && window.forceShowAuthModal()">
+                    <div class="avatar" id="auth-avatar">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                            <polyline points="10 17 15 12 10 7"></polyline>
+                            <line x1="15" y1="12" x2="3" y2="12"></line>
+                        </svg>
+                    </div>
+                    <span class="label" id="auth-label">Login</span>
+                </div>
+
+                <!-- NEW: User Info Section (Visible after login) -->
+                <div class="user-profile profile-active" id="sidebar-user-info" style="display: none;">
+                    <div class="avatar" id="sidebar-user-avatar"></div>
+                    <div class="user-details" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+                        <span class="label" id="sidebar-user-name"
+                            style="font-weight: 600; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">User
+                            Name</span>
+                        <span id="sidebar-user-email"
+                            style="font-size: 0.75rem; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">email@example.com</span>
+                    </div>
+                    <button class="logout-btn-sidebar" id="sidebar-logout-btn" title="Logout"
+                        style="background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: color 0.3s;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Settings Button (Moved here) -->
+                <div class="footer-btn" id="sidebar-settings-btn">
+                    <span class="icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path
+                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                            </path>
+                        </svg>
+                    </span>
+                    <span class="label" data-i18n="sidebar.settings">Settings</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-area">
+            <!-- Chat Header (Top Bar) -->
+            <header class="chat-header">
+                <!-- Subscribe Button (Centered via CSS) -->
+                <button class="subscribe-btn" id="subscribe-btn">
+                    <span class="crown-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"></path>
+                        </svg>
+                    </span>
+                    <span>Subscribe</span>
+                </button>
+                <!-- Pinned Add-ons -->
+                <!-- Pinned Add-ons Wrapper -->
+                <div class="pinned-addons-wrapper" id="pinned-addons-wrapper">
+                    <button class="pinned-addons-trigger" title="Pinned Add-ons">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="12" y1="17" x2="12" y2="22"></line>
+                            <path
+                                d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z">
+                            </path>
+                        </svg>
+                    </button>
+                    <div id="pinned-addons-container" class="pinned-addons-dropdown"></div>
+                </div>
+
+
+                <button class="icon-btn header-btn" id="notif-btn" title="Notifications">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <span class="notif-badge">3</span>
+                </button>
+                <div class="notification-panel" id="notification-panel">
+                    <div class="notif-header">
+                        <h3>Notifications</h3>
+                        <button class="clear-all">Clear all</button>
+                    </div>
+                    <div class="notif-list custom-scrollbar">
+                        <div class="notif-item unread">
+                            <div class="notif-icon info">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
+                            </div>
+                            <div class="notif-content">
+                                <p class="notif-title">System Update</p>
+                                <p class="notif-time">2 mins ago</p>
+                            </div>
+                        </div>
+                        <div class="notif-item">
+                            <div class="notif-icon success">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                </svg>
+                            </div>
+                            <div class="notif-content">
+                                <p class="notif-title">Project Exported</p>
+                                <p class="notif-time">1 hour ago</p>
+                            </div>
+                        </div>
+                        <div class="notif-item">
+                            <div class="notif-icon message">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                </svg>
+                            </div>
+                            <div class="notif-content">
+                                <p class="notif-title">New Message from Support</p>
+                                <p class="notif-time">Yesterday</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-options-wrapper hide-action" id="chat-options-wrapper" style="position: relative;">
+                    <button class="icon-btn header-btn" id="chat-options-btn" title="Chat Options">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="1"></circle>
+                            <circle cx="12" cy="5" r="1"></circle>
+                            <circle cx="12" cy="19" r="1"></circle>
+                        </svg>
+                    </button>
+                    <!-- Context Menu will be appended here by JS -->
+                </div>
+            </header>
+
+            <!-- Sidebar Toggle REMOVED -->
+            <!-- Welcome/Zero State -->
+            <div class="welcome-screen" id="welcome-screen">
+                <div class="logo-hero">
+                    <h1>NANOM</h1>
+                </div>
+
+                <div id="suggestions-view-container">
+                    <div id="suggestions-back-btn-container"
+                        style="display: none; width: 100%; max-width: 800px; margin: 0 auto;">
+                        <button class="back-btn-suggestions" id="back-suggestions">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M19 12H5"></path>
+                                <polyline points="12 19 5 12 12 5"></polyline>
+                            </svg>
+                            Back
+                        </button>
+                    </div>
+
+                    <div class="suggestions-scroller" id="suggestions-main-container">
+                        <!-- MAIN GRID -->
+                        <div class="suggestions-grid" id="suggestions-grid">
+                            <!-- Python Card -->
+                            <div class="crystal-card" data-topic="python">
+                                <div class="card-icon-wrapper">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M12 9V2m0 20v-7m9-6h-7M2 12h7"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                </div>
+                                <h3>Python</h3>
+                                <p>Data Analysis & Scripting</p>
+                            </div>
+                            <!-- React Card -->
+                            <div class="crystal-card" data-topic="react">
+                                <div class="card-icon-wrapper">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <circle cx="12" cy="12" r="2"></circle>
+                                        <path d="M12 12c-3 0-6-1-6-4s3-4 6-4 6 1 6 4-3 4-6 4z"></path>
+                                        <path d="M12 12c0-3 1-6 4-6s4 3 4 6-1 6-4 6-4-3-4-6z"
+                                            transform="rotate(120 12 12)"></path>
+                                        <path d="M12 12c0-3 1-6 4-6s4 3 4 6-1 6-4 6-4-3-4-6z"
+                                            transform="rotate(240 12 12)"></path>
+                                    </svg>
+                                </div>
+                                <h3>React</h3>
+                                <p>Component Architecture</p>
+                            </div>
+                            <!-- Debug Card -->
+                            <div class="crystal-card" data-topic="debug">
+                                <div class="card-icon-wrapper">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path
+                                            d="M12 2v2M12 18v4M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41">
+                                        </path>
+                                    </svg>
+                                </div>
+                                <h3>Debug</h3>
+                                <p>Error Tracing</p>
+                            </div>
+                            <!-- Deploy Card -->
+                            <div class="crystal-card" data-topic="deploy">
+                                <div class="card-icon-wrapper">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                </div>
+                                <h3>Deploy</h3>
+                                <p>Cloud Integration</p>
+                            </div>
+                        </div>
+
+                        <!-- SUB STACK -->
+                        <div class="sub-suggestions-stack" id="sub-suggestions-grid" style="display: none;">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messages Container (initially empty or hidden) -->
+            <div class="messages-container" id="messages-container" style="display: none;">
+                <!-- Messages will be injected here -->
+            </div>
+
+
+
+            <!-- Input Area (Docked Down) -->
+            <div class="input-dock-container">
+                <div class="input-bar is-empty">
+                    <textarea id="chat-input" placeholder="Ask Nanom..." rows="1"
+                        data-i18n-placeholder="input.placeholder"></textarea>
+
+                    <div class="input-actions-row">
+                        <div class="actions-left">
+                            <button class="icon-btn tools-btn" id="tools-btn" title="AI Tools">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                                    <polyline points="2 17 12 22 22 17"></polyline>
+                                    <polyline points="2 12 12 17 22 12"></polyline>
+                                </svg>
+                            </button>
+
+                            <button class="icon-btn compass-btn" id="compass-btn" title="Draft Project">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                                </svg>
+                            </button>
+                            <!-- NEW: Attachment Button -->
+                            <button class="icon-btn attachment-btn" id="attachment-btn" title="Attach File/Photo">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48">
+                                    </path>
+                                </svg>
+                            </button>
+
+                            <!-- Attachment Menu Popover -->
+                            <div class="attachment-menu" id="attachment-menu">
+                                <button class="attach-opt" id="opt-image">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                        <polyline points="21 15 16 10 5 21"></polyline>
+                                    </svg>
+                                    <span>Image</span>
+                                </button>
+                                <button class="attach-opt" id="opt-file">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                                        <polyline points="13 2 13 9 20 9"></polyline>
+                                    </svg>
+                                    <span>File</span>
+                                </button>
+                                <button class="attach-opt" id="opt-camera">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path
+                                            d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                                        </path>
+                                        <circle cx="12" cy="13" r="4"></circle>
+                                    </svg>
+                                    <span>Camera</span>
+                                </button>
+                                <div style="height: 1px; background: var(--border-color); margin: 4px 0;"></div>
+                                <button class="attach-opt" id="opt-drive">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M12 2L2 22h20L12 2z"></path>
+                                        <path d="M2.5 13.5l5.5-9.5"></path>
+                                        <path d="M11 4h10.5"></path>
+                                        <path d="M21.5 12.5L16 22"></path>
+                                    </svg>
+                                    <span>Google Drive</span>
+                                </button>
+                                <button class="attach-opt" id="opt-onedrive">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="3" y1="9" x2="21" y2="9"></line>
+                                        <line x1="9" y1="21" x2="9" y2="9"></line>
+                                    </svg>
+                                    <span>OneDrive</span>
+                                </button>
+                                <div style="height: 1px; background: var(--border-color); margin: 4px 0;"></div>
+                                <button class="attach-opt" id="opt-project">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                    </svg>
+                                    <span>Reference Project</span>
+                                </button>
+                            </div>
+                            <input type="file" id="file-input" style="display: none;" multiple
+                                accept="image/*,.pdf,.doc,.docx,.txt">
+                            <div id="gen-mode-indicator" class="gen-mode-indicator" style="display: none;"
+                                title="Web Mode Active">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                                    <path
+                                        d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                                    </path>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Moved Voice Wave Here -->
+                        <div class="voice-wave-container" id="voice-wave" style="display: none;">
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                        </div>
+
+                        <div class="combined-send-group">
+                            <button class="mic-btn" id="mic-btn">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                                </svg>
+                            </button>
+                            <button class="send-btn" id="send-btn">
+                                <svg class="send-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <line x1="12" y1="19" x2="12" y2="5"></line>
+                                    <polyline points="5 12 12 5 19 12"></polyline>
+                                </svg>
+                                <svg class="mic-icon-inner" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2.5">
+                                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Visualizer Overlay (Hidden by default) -->
+            <div class="visualizer-overlay" id="visualizer">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+
+            <div id="project-context-bar" class="context-bar">
+                <span class="context-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z">
+                        </path>
+                    </svg>
+                </span>
+                <span class="context-text">Editing: <span id="current-project-name">My Web App</span></span>
+                <button id="close-context-btn" class="close-context">×</button>
+            </div>
+        </main>
+    </div>
+
+
+    <!-- Device/Code Modal (Hidden by default) -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-toggle">
+                    <button class="active">Code</button>
+                    <button>Preview</button>
+                </div>
+                <button class="close-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <!-- Code View -->
+                <div class="view-code" style="display: block;">
+                    <pre><code class="language-javascript">console.log("Hello Nanom");</code></pre>
+                </div>
+                <!-- Device Preview (Phone Frame) -->
+                <div class="view-preview" style="display: none;">
+                    <div class="device-frame iphone">
+                        <div class="notch"></div>
+                        <div class="screen-content">
+                            <!-- Preview Content -->
+                            <div class="placeholder-app">App Preview</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div class="modal-overlay" id="auth-modal" style="display: none;">
+        <div class="modal-content auth-modal-content" style="max-width: 400px;">
+            <div class="auth-header">
+                <h2>Welcome</h2>
+                <p>Sign in to access your projects</p>
+            </div>
+            <div class="auth-form">
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="auth-email" placeholder="you@example.com" class="custom-input">
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="auth-password" placeholder="••••••••" class="custom-input">
+                </div>
+                <button class="primary-btn full-width" id="btn-signin"
+                    onclick="window.handleAuthSignIn && window.handleAuthSignIn()">Sign In</button>
+
+                <div class="auth-external-providers"
+                    style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
+                    <button class="google-btn full-width" id="btn-google-signin"
+                        onclick="window.handleAuthGoogle && window.handleAuthGoogle()"
+                        style="background: white; color: #333; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid #ddd; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.3s ease;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                                fill="#4285F4" />
+                            <path
+                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                fill="#34A853" />
+                            <path
+                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.26.81-.58z"
+                                fill="#FBBC05" />
+                            <path
+                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                                fill="#EA4335" />
+                        </svg>
+                        <span>Continue with Google</span>
+                    </button>
+
+                    <button class="github-btn full-width" id="btn-github-signin"
+                        onclick="window.handleAuthGithub && window.handleAuthGithub()"
+                        style="background: #24292e; color: white; border: none; padding: 12px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; font-weight: 500; transition: all 0.3s ease;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.041-1.416-4.041-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                        </svg>
+                        <span>Continue with GitHub</span>
+                    </button>
+                </div>
+
+                <div class="auth-divider"><span>or</span></div>
+                <button class="secondary-btn full-width" id="btn-signup"
+                    onclick="window.handleAuthSignUp && window.handleAuthSignUp()">Create Account</button>
+                <p class="auth-error" id="auth-error-msg"
+                    style="color: #ef4444; margin-top: 10px; font-size: 0.9rem; display: none;"></p>
+            </div>
+            <div class="modal-close-abs">
+                <button class="close-auth-modal" onclick="window.hideAuthModal && window.hideAuthModal()">×</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal-content">
+            <div class="settings-container">
+                <div class="settings-sidebar">
+                    <button class="settings-tab-btn active" data-tab="general">
+                        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path
+                                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                                </path>
+                            </svg></span> General
+                    </button>
+                    <button class="settings-tab-btn" data-tab="personal">
+                        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg></span> Personal
+                    </button>
+                    <button class="settings-tab-btn" data-tab="ai">
+                        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                            </svg></span> AI & Code
+                    </button>
+                    <button class="settings-tab-btn" data-tab="account" id="settings-tab-account">
+                        <span class="icon" id="settings-tab-account-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            </svg>
+                        </span>
+                        <span class="label" id="settings-tab-account-label">Account</span>
+                    </button>
+                    <button class="settings-tab-btn" data-tab="data">
+                        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                <polyline points="7 3 7 8 15 8"></polyline>
+                            </svg></span> Data
+                    </button>
+                    <button class="settings-tab-btn" data-tab="shortcuts">
+                        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                                <line x1="6" y1="12" x2="6" y2="12"></line>
+                                <line x1="10" y1="12" x2="10" y2="12"></line>
+                                <line x1="14" y1="12" x2="14" y2="12"></line>
+                            </svg></span> Shortcuts
+                    </button>
+                    <button class="settings-tab-btn" data-tab="advanced">
+                        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path
+                                    d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z">
+                                </path>
+                            </svg></span> Advanced
+                    </button>
+                    <button class="settings-tab-btn" data-tab="addons">
+                        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg></span> Add-ons
+                    </button>
+                </div>
+                <div class="settings-content-area custom-scrollbar">
+
+                    <!-- General -->
+                    <div class="settings-section" id="settings-general" style="display: block;">
+                        <h2>General</h2>
+                        <div class="settings-card">
+                            <div class="setting-group">
+                                <label data-i18n="settings.language">Language</label>
+                                <div class="segmented-control" id="lang-selector">
+                                    <button class="segment" data-lang="en">English</button>
+                                    <button class="segment" data-lang="ar">العربية</button>
+                                </div>
+                            </div>
+                            <div class="setting-group">
+                                <label data-i18n="settings.appearance">Appearance</label>
+                                <div class="segmented-control" id="theme-selector">
+                                    <button class="segment" data-theme-val="dark">Dark</button>
+                                    <button class="segment" data-theme-val="light">Light</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <label>Interface Scale <span id="scale-value">100%</span></label>
+                            <input type="range" min="80" max="120" value="100" class="range-slider" id="setting-scale">
+                        </div>
+                        <div class="setting-group">
+                            <label>Animation Speed <span id="speed-value">1.0x</span></label>
+                            <input type="range" min="0.5" max="2.0" step="0.1" value="1.0" class="range-slider"
+                                id="setting-speed">
+                        </div>
+                        <div class="setting-group">
+                            <label>Brightness <span id="brightness-value">100%</span></label>
+                            <input type="range" min="20" max="100" value="100" class="range-slider"
+                                id="setting-brightness">
+                        </div>
+                        <div class="setting-row">
+                            <label>Premium Background Blobs</label>
+                            <input type="checkbox" class="toggle-switch" id="toggle-blobs" checked>
+                        </div>
+                        <div class="setting-row">
+                            <label>Haptic Feedback</label>
+                            <input type="checkbox" class="toggle-switch" id="toggle-haptic" checked>
+                        </div>
+                        <div class="setting-row">
+                            <label>Sound Effects</label>
+                            <input type="checkbox" class="toggle-switch" id="toggle-sound" checked>
+                        </div>
+                    </div>
+
+                    <!-- Personal -->
+                    <div class="settings-section" id="settings-personal">
+                        <h2>Personal Identity</h2>
+                        <div class="settings-card">
+                            <div class="setting-group">
+                                <label>Your Name</label>
+                                <input type="text" class="custom-input" id="setting-username"
+                                    placeholder="How should AI address you?">
+                            </div>
+                        </div>
+                        <div class="setting-group">
+                            <label>About You</label>
+                            <textarea class="custom-input" rows="3"
+                                placeholder="I am a frontend developer who loves..."></textarea>
+                        </div>
+
+                        <h3 style="margin-top: 25px; margin-bottom: 15px;">Memory Bank</h3>
+                        <div class="settings-card">
+                            <div class="memory-list">
+                                <div class="memory-item">
+                                    <span>User prefers Tailwind CSS</span>
+                                    <button class="delete-mem">×</button>
+                                </div>
+                                <div class="memory-item">
+                                    <span>Project "Alpha" is priority</span>
+                                    <button class="delete-mem">×</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI & Code -->
+                    <div class="settings-section" id="settings-ai">
+                        <h2>AI Behavior</h2>
+                        <div class="settings-card">
+                            <div class="setting-group">
+                                <label>Personality Model</label>
+                                <select class="custom-input">
+                                    <option>Friendly & Helpful</option>
+                                    <option>Concise & Technical</option>
+                                    <option>Socratic (Teaching)</option>
+                                </select>
+                            </div>
+                            <div class="setting-group">
+                                <label>Preferred Stack</label>
+                                <select class="custom-input" id="setting-stack">
+                                    <option>React (Next.js)</option>
+                                    <option>Vue.js</option>
+                                    <option>Python (FastAPI)</option>
+                                    <option>Android (Kotlin)</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label>Auto-format Generated Code</label>
+                                <input type="checkbox" class="toggle-switch" id="toggle-autoformat" checked>
+                            </div>
+                            <div class="setting-row">
+                                <label>Auto-Save Projects</label>
+                                <input type="checkbox" class="toggle-switch" id="toggle-autosave" checked>
+                            </div>
+                        </div>
+
+                        <div class="advanced-toggle-area">
+                            <button class="advanced-btn" id="toggle-advanced-ai">Show Advanced Code Options <svg
+                                    width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg></button>
+                            <div class="advanced-options" id="advanced-ai-options" style="display: none;">
+                                <div class="settings-card mt-2">
+                                    <div class="setting-group">
+                                        <label>Variable Naming</label>
+                                        <div class="radio-group">
+                                            <label><input type="radio" name="naming" checked> camelCase</label>
+                                            <label><input type="radio" name="naming"> snake_case</label>
+                                        </div>
+                                    </div>
+                                    <div class="setting-group">
+                                        <label>Error Handling</label>
+                                        <select class="custom-input">
+                                            <option>Try/Catch Blocks</option>
+                                            <option>Minimal</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Account -->
+                    <div class="settings-section" id="settings-account">
+                        <h2>Account & Security</h2>
+                        <div class="settings-card">
+                            <div id="settings-account-view">
+                                <!-- Authenticated View -->
+                                <div id="account-authenticated-view" style="display: none; padding: 10px;">
+                                    <div class="account-header"
+                                        style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 16px; border: 1px solid var(--border-color);">
+                                        <div class="big-avatar" id="settings-user-avatar"
+                                            style="width: 60px; height: 60px; font-size: 1.5rem; border: 2px solid var(--accent-primary); box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);">
+                                            U</div>
+                                        <div style="flex: 1;">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <h3 id="settings-account-name" style="margin: 0; font-size: 1.2rem;">
+                                                    User Name</h3>
+                                                <span class="pro-badge"
+                                                    style="background: linear-gradient(135deg, #6366f1, #a855f7); color: white; font-size: 0.65rem; padding: 2px 8px; border-radius: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Cloud
+                                                    Member</span>
+                                            </div>
+                                            <p class="sub-text" id="settings-account-email"
+                                                style="margin: 4px 0 0 0; opacity: 0.6; font-size: 0.85rem;">
+                                                user@example.com</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="setting-group" style="margin-bottom: 20px;">
+                                        <label
+                                            style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px; display: block;">Authenticated
+                                            via</label>
+                                        <div id="settings-account-status"
+                                            style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(16, 185, 129, 0.1); color: #10b981; border-radius: 8px; font-size: 0.85rem; font-weight: 500;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="3">
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                            Secure Session
+                                        </div>
+                                    </div>
+
+                                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                                        <button class="secondary-btn full-width" id="settings-logout-btn"
+                                            style="justify-content: center; height: 45px; border-radius: 10px;">Sign
+                                            Out</button>
+                                        <button class="danger-btn full-width" id="settings-delete-data-btn"
+                                            style="margin-top: 5px; border: none; color: #f87171; background: rgba(248, 113, 113, 0.05); height: 40px; font-size: 0.85rem; border-radius: 10px;">Delete
+                                            Cloud Data</button>
+                                    </div>
+                                </div>
+
+                                <!-- Simplified Guest View -->
+                                <div id="account-guest-view" style="padding: 20px; text-align: center;">
+                                    <div class="auth-header" style="margin-bottom: 25px;">
+                                        <div
+                                            style="width: 60px; height: 60px; background: var(--bg-hover); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: var(--text-secondary);">
+                                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2">
+                                                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                                                <polyline points="10 17 15 12 10 7"></polyline>
+                                                <line x1="15" y1="12" x2="3" y2="12"></line>
+                                            </svg>
+                                        </div>
+                                        <h2 style="font-size: 1.5rem; margin-bottom: 8px;">Sign In to Cloud</h2>
+                                        <p style="color: var(--text-secondary); font-size: 0.9rem;">Sync your projects
+                                            and settings across devices.</p>
+                                    </div>
+                                    <button class="primary-btn"
+                                        onclick="window.forceShowAuthModal && window.forceShowAuthModal()"
+                                        style="width: 100%; height: 50px; border-radius: 12px; font-weight: 600; font-size: 1rem; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);">
+                                        Login / Create Account
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Separator -->
+                        <div style="height: 1px; background: var(--border-color-dim); margin: 24px 0;"></div>
+
+                        <div class="setting-row">
+                            <label>App PIN Lock</label>
+                            <button class="btn-secondary">Set PIN</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shortcuts -->
+                <div class="settings-section" id="settings-shortcuts">
+                    <h2>Keyboard Shortcuts</h2>
+                    <div class="settings-card">
+                        <div class="shortcut-row">
+                            <span>New Chat</span>
+                            <kbd>Ctrl + N</kbd>
+                        </div>
+                        <div class="shortcut-row">
+                            <span>Search</span>
+                            <kbd>Ctrl + K</kbd>
+                        </div>
+                        <div class="shortcut-row">
+                            <span>Toggle Sidebar</span>
+                            <kbd>Ctrl + B</kbd>
+                        </div>
+                        <div class="shortcut-row">
+                            <span>Generate Project</span>
+                            <kbd>Ctrl + Enter</kbd>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data -->
+                <div class="settings-section" id="settings-data">
+                    <h2>Data & Privacy</h2>
+                    <div class="settings-card">
+                        <div class="setting-row">
+                            <label>Export All Data (JSON)</label>
+                            <button id="btn-export-data" class="btn-sml">Export</button>
+                        </div>
+                        <div class="setting-row delete-row">
+                            <label style="color:#f87171;">Delete All Data</label>
+                            <button class="btn-danger" id="btn-delete-data">Delete</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced -->
+                <div class="settings-section" id="settings-advanced">
+                    <h2>Advanced Controls</h2>
+                    <div class="settings-card">
+                        <div class="setting-group">
+                            <label>Local Model Endpoint</label>
+                            <div class="copy-field">
+                                <input type="text" value="http://localhost:11434" class="custom-input"
+                                    style="font-family: monospace;">
+                            </div>
+                        </div>
+                        <div class="setting-group">
+                            <label>Max Tokens per Request</label>
+                            <input type="number" value="4096" class="custom-input">
+                        </div>
+                        <div class="setting-row">
+                            <label>Enable Debug Mode</label>
+                            <input type="checkbox" class="toggle-switch">
+                        </div>
+                        <div class="setting-row">
+                            <label>Verbose Logs</label>
+                            <input type="checkbox" class="toggle-switch">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add-ons Settings -->
+                <div class="settings-section" id="settings-addons">
+                    <h2>Add-ons Manager</h2>
+
+                    <!-- Summary Card -->
+                    <div class="settings-card"
+                        style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1)); border-color: rgba(139, 92, 246, 0.3);">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div
+                                style="width: 50px; height: 50px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white"
+                                    stroke-width="2">
+                                    <rect x="3" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="14" width="7" height="7"></rect>
+                                    <rect x="3" y="14" width="7" height="7"></rect>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 style="margin: 0 0 5px 0; font-size: 1.1rem;">Enhance your experience</h3>
+                                <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">Add-ons are
+                                    mini
+                                    tools to boost productivity, creativity, and fun.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="settings-card">
+                        <h3 style="margin-bottom: 15px; font-size: 1rem;">Quick Actions</h3>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn-primary"
+                                onclick="document.getElementById('addons-modal').classList.add('active');"
+                                style="display: flex; align-items: center; gap: 8px;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                                </svg>
+                                Open Add-ons Store
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Pinned Add-ons -->
+                    <div class="settings-card">
+                        <h3 style="margin-bottom: 15px; font-size: 1rem;">Pinned Add-ons</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 15px;">Quick
+                            access
+                            tools pinned to your header. Manage from the store.</p>
+                        <div id="settings-pinned-list" style="display: flex; flex-wrap: wrap; gap: 10px;">
+                            <!-- Populated by JS -->
+                            <span style="color: var(--text-secondary); font-size: 0.85rem; opacity: 0.7;">No pinned
+                                add-ons yet. Visit the store to pin some!</span>
+                        </div>
+                    </div>
+
+                    <!-- Add-ons Preferences -->
+                    <div class="settings-card">
+                        <h3 style="margin-bottom: 15px; font-size: 1rem;">Preferences</h3>
+                        <div class="setting-row">
+                            <label>Show pinned add-ons in header</label>
+                            <input type="checkbox" class="toggle-switch" id="toggle-show-pinned" checked>
+                        </div>
+                        <div class="setting-row">
+                            <label>Remember widget positions</label>
+                            <input type="checkbox" class="toggle-switch" id="toggle-save-positions" checked>
+                        </div>
+                        <div class="setting-row">
+                            <label>Enable widget animations</label>
+                            <input type="checkbox" class="toggle-switch" id="toggle-widget-animations" checked>
+                        </div>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="settings-card">
+                        <h3 style="margin-bottom: 15px; font-size: 1rem;">Statistics</h3>
+                        <div
+                            style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center;">
+                            <div style="background: var(--bg-hover); padding: 15px; border-radius: 12px;">
+                                <div style="font-size: 1.8rem; font-weight: bold; color: var(--accent-primary);"
+                                    id="stat-total-addons">18</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary);">Available</div>
+                            </div>
+                            <div style="background: var(--bg-hover); padding: 15px; border-radius: 12px;">
+                                <div style="font-size: 1.8rem; font-weight: bold; color: #10b981;"
+                                    id="stat-pinned-count">0</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary);">Pinned</div>
+                            </div>
+                            <div style="background: var(--bg-hover); padding: 15px; border-radius: 12px;">
+                                <div style="font-size: 1.8rem; font-weight: bold; color: #f59e0b;"
+                                    id="stat-active-widgets">0</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary);">Active</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="modal-header" style="position: absolute; top: 0; right: 0; border: none; padding: 10px;">
+            <button class="close-modal close-settings">×</button>
+        </div>
+    </div>
+    </div>
+
+    <!-- AI Tools Sheet -->
+    <div class="ai-sheet" id="ai-tools-sheet">
+        <div class="creativity-control">
+            <div class="creativity-indicator"></div>
+            <div class="creativity-option active">Focused</div>
+            <div class="creativity-option">Balanced</div>
+            <div class="creativity-option">Creative</div>
+        </div>
+
+        <div class="models-list">
+            <div class="model-option active" data-model="pro">
+                <div>
+                    <span style="font-weight: 600;">Pro Model</span>
+                    <span style="color: #666; font-size: 0.8rem; margin-left: 8px;">Smart & Fast</span>
+                </div>
+                <span class="check-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg></span>
+            </div>
+            <div class="model-option" data-model="agent">
+                <div>
+                    <span style="font-weight: 600; color: #fbbf24;">Agent Model</span>
+                    <span style="color: #666; font-size: 0.8rem; margin-left: 8px;">Complex Tasks</span>
+                </div>
+                <span class="check-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg></span>
+            </div>
+        </div>
+
+        <div class="tools-row">
+            <button class="tool-toggle" title="Web Search">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <path
+                        d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                    </path>
+                </svg>
+            </button>
+            <button class="tool-toggle" title="Auto Fix">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path
+                        d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z">
+                    </path>
+                </svg>
+            </button>
+            <button class="tool-toggle" title="Deep Thinking">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 18h6"></path>
+                    <path d="M10 22h4"></path>
+                    <path
+                        d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.26C17.81 13.47 19 11.38 19 9a7 7 0 0 0-7-7z">
+                    </path>
+                </svg>
+            </button>
+            </button>
+        </div>
+
+        <div class="sheet-action-row"
+            style="margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+            <button class="btn-secondary" id="btn-open-addons"
+                style="width: 100%; justify-content: space-between; display: flex; align-items: center;">
+                <span data-i18n="tools.addons">Add-ons</span>
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Library Modal (New) -->
+    <div class="modal-overlay" id="library-modal">
+        <div class="modal-content library-wrapper">
+            <div class="lib-header">
+                <div class="lib-title-group">
+                    <h2>Library</h2>
+                    <div class="lib-tabs">
+                        <button class="lib-tab active" data-view="projects">Projects</button>
+                        <button class="lib-tab" data-view="spaces">Spaces</button>
+                        <button class="lib-tab" data-view="templates">Templates</button>
+                    </div>
+                </div>
+                <div class="lib-actions">
+                    <button class="btn-primary" id="lib-new-project-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        New Project
+                    </button>
+                    <button class="btn-primary" id="lib-new-space-btn" style="display: none;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        New Space
+                    </button>
+                    <button class="close-modal">×</button>
+                </div>
+            </div>
+
+            <div class="lib-body">
+                <!-- Projects View -->
+                <div class="lib-view active" id="view-projects">
+                    <div class="filter-bar">
+                        <div class="search-wrap">
+                            <span class="search-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                            </span>
+                            <input type="text" id="lib-search" placeholder="Search projects...">
+                        </div>
+                        <div class="filter-chips">
+                            <button class="chip active" data-filter="all">All</button>
+                            <button class="chip" data-filter="html">Web</button>
+                            <button class="chip" data-filter="android">Android</button>
+                            <button class="chip" data-filter="docs">Docs</button>
+                        </div>
+                    </div>
+
+                    <div class="projects-grid custom-scrollbar" id="lib-projects-grid">
+                        <!-- Content Injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Spaces View -->
+                <div class="lib-view" id="view-spaces">
+                    <div class="spaces-grid custom-scrollbar" id="lib-spaces-grid">
+                        <!-- Content Injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Templates View -->
+                <div class="lib-view" id="view-templates">
+                    <div class="filter-bar">
+                        <div class="search-wrap">
+                            <span class="search-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                            </span>
+                            <input type="text" id="lib-tpl-search" placeholder="Search templates...">
+                        </div>
+                        <div class="filter-chips" id="tpl-filter-chips">
+                            <button class="chip active" data-filter="all">All</button>
+                            <button class="chip" data-filter="web">Web</button>
+                            <button class="chip" data-filter="mobile">Mobile</button>
+                            <button class="chip" data-filter="ai">AI</button>
+                            <button class="chip" data-filter="business">Business</button>
+                            <button class="chip" data-filter="personal">Personal</button>
+                        </div>
+                    </div>
+                    <div class="templates-grid custom-scrollbar" id="lib-templates-grid">
+                        <!-- Content Injected via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subscription Modal -->
+    <div class="modal-overlay" id="subscription-modal">
+        <div class="modal-content subscription-wrapper">
+            <button class="close-modal absolute-top-right">×</button>
+            <div class="sub-header">
+                <h2>Upgrade Your Workspace</h2>
+                <p>Unlock advanced AI agents and unlimited power.</p>
+            </div>
+
+            <div class="plans-grid">
+                <!-- Free -->
+                <div class="plan-card plan-free current">
+                    <div class="plan-top">
+                        <h3>Free</h3>
+                        <div class="price">$0<span>/mo</span></div>
+                    </div>
+                    <ul class="features">
+                        <li>Basic Models</li>
+                        <li>50 Pro Points</li>
+                        <li>Community Support</li>
+                    </ul>
+                    <button class="btn-plan" disabled>Current Plan</button>
+                </div>
+
+                <!-- Pro -->
+                <div class="plan-card plan-pro">
+                    <div class="badge-pop">MOST POPULAR</div>
+                    <div class="plan-top">
+                        <h3>Pro</h3>
+                        <div class="price">$19<span>/mo</span></div>
+                    </div>
+                    <ul class="features">
+                        <li>Advanced Agents</li>
+                        <li>500 Agent Points</li>
+                        <li>Priority Generation</li>
+                    </ul>
+                    <button class="btn-plan"
+                        onclick="document.getElementById('activation-code').focus()">Upgrade</button>
+                </div>
+
+                <!-- Nano -->
+                <div class="plan-card plan-nano">
+                    <div class="plan-top">
+                        <h3>Nano</h3>
+                        <div class="price">$49<span>/mo</span></div>
+                    </div>
+                    <ul class="features">
+                        <li>Elite Models (Nano)</li>
+                        <li>Unlimited Points</li>
+                        <li>Early Access</li>
+                    </ul>
+                    <button class="btn-plan" onclick="document.getElementById('activation-code').focus()">Go
+                        Elite</button>
+                </div>
+
+                <!-- Enterprise -->
+                <div class="plan-card plan-enterprise">
+                    <div class="plan-top">
+                        <h3>Enterprise</h3>
+                        <div class="price" id="ent-price">$150<span>/mo</span></div>
+                    </div>
+                    <div class="slider-container">
+                        <label>Members: <span id="member-count">10</span></label>
+                        <input type="range" id="member-slider" min="1" max="50" value="10">
+                    </div>
+                    <ul class="features">
+                        <li>Custom Agents</li>
+                        <li>SSO & Security</li>
+                        <li>Dedicated Support</li>
+                    </ul>
+                    <button class="btn-plan contact">Contact Sales</button>
+                </div>
+            </div>
+
+            <div class="activation-area">
+                <p>Have an activation code?</p>
+                <div class="input-group">
+                    <input type="text" id="activation-code" placeholder="Enter Code (e.g. 182006)">
+                    <button id="activate-btn" class="btn-primary">Activate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <!-- Create Space Modal (Beautiful Customization) -->
+    <div class="modal-overlay" id="create-space-modal">
+        <div class="modal-content space-creation-wrapper">
+            <div class="modal-header">
+                <h2>Create New Space</h2>
+                <button class="close-modal">×</button>
+            </div>
+            <div class="modal-body space-creation-body">
+                <div class="creation-form">
+                    <div class="setting-group">
+                        <label>Space Name</label>
+                        <input type="text" id="space-name-input" class="custom-input large"
+                            placeholder="Enter space name...">
+                    </div>
+
+                    <div class="setting-group">
+                        <label>Choose Theme</label>
+                        <div class="color-grid" id="space-color-grid">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <label>Choose Icon</label>
+                        <div class="icon-selector-grid" id="space-icon-grid">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="creation-preview">
+                    <label>Preview</label>
+                    <div id="space-preview-card" class="space-card preview">
+                        <div class="space-title">New Space</div>
+                        <div class="space-icon-large">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            </svg>
+                        </div>
+                    </div>
+                    <button class="btn-primary full-width" id="confirm-create-space" style="margin-top: 24px;">Create
+                        Space</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prism Syntax Highlighting Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <div id="brightness-overlay"></div>
+    <!-- Add-ons Modal -->
+    <div class="modal-overlay" id="addons-modal">
+        <div class="modal-content store-layout">
+            <div class="modal-header">
+                <div class="store-header-left">
+                    <h2 class="store-title">Add-ons</h2>
+                    <div class="store-search-container">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="store-search-input" placeholder="Search Add-ons..." autocomplete="off">
+                    </div>
+                    <button class="btn-primary" style="height: 48px; border-radius: 12px; padding: 0 24px;"
+                        onclick="addonManager.showCreateModal()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" style="margin-right:8px; vertical-align:middle;">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>Create
+                    </button>
+                </div>
+                <button class="close-modal">×</button>
+            </div>
+
+            <div class="modal-body custom-scrollbar">
+                <!-- Cloud SDKs -->
+                <script async defer src="https://apis.google.com/js/api.js"></script>
+                <script type="text/javascript" src="https://js.live.net/v7.2/OneDrive.js"></script>
+
+                <!-- Highlight.js for Code Styling -->
+                <div class="store-hero">
+                    <div class="hero-content">
+                        <div class="hero-tag" id="hero-tag">FEATURED</div>
+                        <div class="hero-app-icon" id="hero-app-icon">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                        </div>
+                        <h1 class="hero-title" id="hero-title">Visual Designer</h1>
+                        <p class="hero-desc" id="hero-desc">Create stunning visuals and UI designs directly in chat with
+                            our advanced
+                            design assistant.</p>
+                        <button class="btn-hero" id="btn-hero" onclick="addonManager.launch('colors')">Open</button>
+                    </div>
+                    <div class="hero-visual">
+                        <div class="hero-card-stack">
+                            <div class="h-card c1"></div>
+                            <div class="h-card c2"></div>
+                            <div class="h-card c3"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Chips -->
+                <div class="store-categories">
+                    <button class="cat-chip active" data-cat="all">Featured</button>
+                    <button class="cat-chip" data-cat="productivity">Productivity</button>
+                    <button class="cat-chip" data-cat="dev">Developer</button>
+                    <button class="cat-chip" data-cat="design">Design</button>
+                    <button class="cat-chip" data-cat="my">My Creations</button>
+                </div>
+
+                <div class="store-section-title">Essential Tools</div>
+
+                <div class="addons-grid" id="addons-grid-container">
+                    <!-- Cards injected by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ADDON: Pomodoro Widget -->
+    <div id="pomodoro-widget" class="floating-widget">
+        <div class="widget-header">
+            <span style="display:flex; align-items:center; gap:8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg> Focus</span>
+            <div class="window-controls">
+                <button onclick="this.closest('.floating-widget').classList.remove('active')">×</button>
+            </div>
+        </div>
+        <div class="timer-display" id="pomo-timer">25:00</div>
+        <div class="timer-controls">
+            <button id="pomo-start" class="btn-primary btn-sml">Start</button>
+            <button id="pomo-reset" class="btn-secondary btn-sml">Reset</button>
+        </div>
+    </div>
+
+    <!-- ADDON: Tasks Widget -->
+    <div id="tasks-widget" class="floating-widget" style="bottom: 20px; right: 20px;">
+        <div class="widget-header">
+            <span style="display:flex; align-items:center; gap:8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg> Tasks</span>
+            <div class="window-controls">
+                <button onclick="this.closest('.floating-widget').classList.remove('active')">×</button>
+            </div>
+        </div>
+        <div class="tasks-list custom-scrollbar" id="quick-tasks-list">
+            <!-- Items -->
+        </div>
+        <div class="task-input-row">
+            <input type="text" id="new-task-input" placeholder="Add task...">
+            <button id="add-task-btn">+</button>
+        </div>
+    </div>
+
+    <!-- ADDON: Color Studio Modal -->
+    <div class="modal-overlay" id="color-modal">
+        <div class="modal-content glass-panel" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="vertical-align:middle;margin-right:8px;">
+                        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+                    </svg>Color Studio</h3>
+                <button class="close-modal">×</button>
+            </div>
+            <div class="modal-body" style="flex-direction: column; gap: 20px;">
+                <input type="color" id="main-color-picker" value="#3b82f6"
+                    style="width: 100%; height: 50px; cursor: pointer;">
+                <div class="color-values">
+                    <div class="value-row">
+                        <span>HEX</span>
+                        <code id="color-hex">#3b82f6</code>
+                        <button class="btn-sml" onclick="addonManager.copyColor('hex')">Copy</button>
+                    </div>
+                    <div class="value-row">
+                        <span>RGB</span>
+                        <code id="color-rgb">rgb(59, 130, 246)</code>
+                        <button class="btn-sml" onclick="addonManager.copyColor('rgb')">Copy</button>
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="addonManager.sendColorToChat()">Send HEX to Chat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADDON: Snippets Modal -->
+    <div class="modal-overlay" id="snippets-modal">
+        <div class="modal-content glass-panel" style="max-width: 700px; height: 70vh;">
+            <div class="modal-header">
+                <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="vertical-align:middle;margin-right:8px;">
+                        <polyline points="16 18 22 12 16 6"></polyline>
+                        <polyline points="8 6 2 12 8 18"></polyline>
+                    </svg>Code Snippets</h3>
+                <button class="close-modal">×</button>
+            </div>
+            <div class="modal-body" style="flex-direction: column; padding: 0;">
+                <div class="snippets-toolbar"
+                    style="padding: 15px; border-bottom: 1px solid var(--border-color); display: flex; gap: 10px;">
+                    <input type="text" id="snippet-name" placeholder="Snippet Name (e.g. Fetch)" class="custom-input"
+                        style="flex:1;">
+                    <button class="btn-primary btn-sml" onclick="addonManager.saveSnippet()">Save Input</button>
+                </div>
+                <div class="snippets-list custom-scrollbar" id="saved-snippets-list"
+                    style="flex: 1; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; align-content: start;">
+                    <!-- Snippet Cards -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADDON: Create Addon Modal -->
+    <div class="modal-overlay" id="create-addon-modal">
+        <div class="modal-content glass-panel" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Submit New Add-on</h3>
+                <button class="close-modal">×</button>
+            </div>
+            <div class="modal-body" style="flex-direction: column; gap: 20px;">
+                <div class="input-group">
+                    <label>Add-on Name</label>
+                    <input type="text" id="addon-name-input" placeholder="e.g. My Custom Tool" class="custom-input">
+                </div>
+                <div class="input-group">
+                    <label>Paste Component HTML/Code</label>
+                    <textarea id="addon-code-input" placeholder="<div>...</div>"
+                        style="height: 200px; resize: vertical;" class="custom-input"></textarea>
+                </div>
+                <button class="btn-primary" onclick="addonManager.submitForReview()">Send for Review</button>
+            </div>
+        </div>
+    </div>
+    <!-- Project Selection Modal -->
+    <div class="modal-overlay" id="project-picker-modal">
+        <div class="modal-content glass-panel" style="max-width: 500px; height: 60vh;">
+            <div class="modal-header">
+                <h3>Select Project to Reference</h3>
+                <button class="close-modal"
+                    onclick="document.getElementById('project-picker-modal').classList.remove('active')">×</button>
+            </div>
+            <div class="modal-body custom-scrollbar" id="project-picker-list"
+                style="flex-direction: column; gap: 10px; overflow-y: auto;">
+                <!-- Projects will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ADDON: Custom Addon View Modal -->
+    <div class="modal-overlay" id="custom-addon-modal">
+        <div class="modal-content glass-panel" style="max-width: 800px; height: 80vh;">
+            <div class="modal-header">
+                <h3 id="custom-addon-title">Custom Add-on</h3>
+                <button class="close-modal">×</button>
+            </div>
+            <div class="modal-body custom-scrollbar" id="custom-addon-body"
+                style="flex-direction: column; overflow-y: auto; padding: 20px;">
+                <!-- HTML Content Injected Here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ADDON: Converter Modal -->
+    <div class="modal-overlay" id="converter-modal">
+        <div class="modal-content glass-panel" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="vertical-align:middle;margin-right:8px;">
+                        <path d="M7 17l9.2-9.2M17 17V7H7"></path>
+                    </svg>Unit Converter</h3>
+                <button class="close-modal">×</button>
+            </div>
+            <div class="modal-body" style="flex-direction: column; gap: 20px;">
+                <div class="conv-row">
+                    <label>Pixels (px)</label>
+                    <input type="number" id="conv-px" class="custom-input" placeholder="16">
+                </div>
+                <div style="align-self: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <path d="M7 10l5-5 5 5"></path>
+                        <path d="M7 14l5 5 5-5"></path>
+                    </svg></div>
+                <div class="conv-row">
+                    <label>REM (root 16px)</label>
+                    <input type="number" id="conv-rem" class="custom-input" placeholder="1">
+                </div>
+                <button class="btn-primary" onclick="addonManager.sendConvToChat()">Send Result to Chat</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Template Preview Modal -->
+    <div class="modal-overlay" id="template-modal">
+        <div class="modal-content template-preview-content">
+            <div class="modal-header">
+                <h2 id="template-preview-title">Template Preview</h2>
+                <button class="close-modal">×</button>
+            </div>
+            <div class="modal-body template-body">
+                <div class="template-sidebar">
+                    <div class="template-details">
+                        <div class="template-icon-large" id="template-preview-icon"></div>
+                        <p id="template-preview-desc">Description goes here...</p>
+                        <div class="template-meta">
+                            <span class="badge">React</span>
+                            <span class="badge">Vite</span>
+                        </div>
+                    </div>
+                    <div class="template-actions">
+                        <button class="btn-primary" id="btn-add-library">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M5 12h14"></path>
+                                <path d="M12 5v14"></path>
+                            </svg>
+                            Add to Library
+                        </button>
+                        <button class="btn-secondary" id="btn-report-bug">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path
+                                    d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                                </path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                            Report Bug
+                        </button>
+                    </div>
+                </div>
+                <div class="template-preview-area">
+                    <div class="modal-toggle">
+                        <button class="active" data-view="preview">Preview</button>
+                        <button data-view="code">Code</button>
+                    </div>
+                    <div class="preview-container">
+                        <div class="view-preview" style="display:flex;">
+                            <div class="placeholder-preview">
+                                <span>Interactive Preview</span>
+                            </div>
+                        </div>
+                        <div class="view-code" style="display:none;">
+                            <pre><code class="language-javascript">// Template Source Code</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subscription Modal -->
+    <div class="modal-overlay" id="subscription-modal">
+        <div class="modal-content" style="max-width: 800px; background: rgba(18, 18, 18, 0.95);">
+            <div class="modal-header" style="border:none;">
+                <button class="close-modal" id="close-sub-modal">×</button>
+            </div>
+            <div class="sub-body" style="text-align: center; padding: 0 40px 40px;">
+                <div class="sub-hero">
+                    <h2
+                        style="font-size: 2.5rem; margin-bottom: 10px; background: linear-gradient(90deg, #fbbf24, #f59e0b); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                        Unlock Nanom Pro</h2>
+                    <p style="color: #999; font-size: 1.1rem; max-width: 500px; margin: 0 auto 40px;">Get unlimited
+                        access to advanced AI models, faster generation, and premium tools.</p>
+                </div>
+
+                <div class="pricing-cards" style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                    <!-- Monthly -->
+                    <div class="price-card">
+                        <div class="price-header">
+                            <h3>Monthly</h3>
+                            <div class="price">$19<span class="period">/mo</span></div>
+                        </div>
+                        <ul class="features-list">
+                            <li><span class="check">✓</span> All AI Models</li>
+                            <li><span class="check">✓</span> Unlimited Chats</li>
+                            <li><span class="check">✓</span> Fast Generation</li>
+                        </ul>
+                        <button class="btn-sub">Subscribe</button>
+                    </div>
+
+                    <!-- Lifetime (Featured) -->
+                    <div class="price-card featured">
+                        <div class="popular-tag">Best Value</div>
+                        <div class="price-header">
+                            <h3>Lifetime</h3>
+                            <div class="price">$299<span class="period">/once</span></div>
+                        </div>
+                        <ul class="features-list">
+                            <li><span class="check">✓</span> <strong>Everything in Monthly</strong></li>
+                            <li><span class="check">✓</span> Priority Support</li>
+                            <li><span class="check">✓</span> Early Access Features</li>
+                            <li><span class="check">✓</span> One-time Payment</li>
+                        </ul>
+                        <button class="btn-sub primary">Purchase Lifetime</button>
+                    </div>
+                </div>
+
+                <!-- Enterprise/Institutional Section -->
+                <div class="enterprise-section"
+                    style="margin-top: 30px; padding: 25px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 16px; text-align: left; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+                    <div class="ent-info">
+                        <h3 style="color: var(--text-primary); margin-bottom: 5px; font-size: 1.2rem;">For
+                            Institutions
+                            & Teams</h3>
+                        <p style="color: var(--text-secondary); margin: 0; font-size: 0.95rem;">Empower your
+                            organization with centralized billing, admin controls, and dedicated API access.</p>
+                    </div>
+                    <button class="btn-sub"
+                        style="width: auto; padding: 10px 24px; background: rgba(255,255,255,0.1);">Contact
+                        Sales</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- ADDON: Code Playground Modal -->
+    <div class="modal-overlay" id="playground-modal">
+        <div class="modal-content glass-panel" style="max-width: 95vw; max-height: 90vh;">
+            <div class="modal-header">
+                <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="vertical-align:middle;margin-right:8px;">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>Code Playground</h3>
+                <button class="close-modal">×</button>
+            </div>
+            <div class="modal-body playground-body">
+                <div class="playground-editors">
+                    <div class="editor-panel">
+                        <div class="editor-header">HTML</div>
+                        <textarea id="html-editor" class="code-editor" placeholder="<h1>Hello World</h1>"></textarea>
+                    </div>
+                    <div class="editor-panel">
+                        <div class="editor-header">CSS</div>
+                        <textarea id="css-editor" class="code-editor" placeholder="h1 { color: blue;}"></textarea>
+                    </div>
+                    <div class="editor-panel">
+                        <div class="editor-header">JavaScript</div>
+                        <textarea id="js-editor" class="code-editor" placeholder="console.log('Hello');"></textarea>
+                    </div>
+                </div>
+                <div class="playground-preview">
+                    <div class="preview-header">
+                        <span>Preview</span>
+                        <button class="btn-sml btn-secondary" onclick="addonManager.sendPlaygroundToChat()">Send to
+                            Chat</button>
+                    </div>
+                    <iframe id="playground-iframe"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADDON: API Tester Modal -->
+    <div class="modal-overlay" id="api-modal">
+        <div class="modal-content glass-panel" style="max-width: 800px; max-height: 80vh;">
+            <div class="modal-header">
+                <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="vertical-align:middle;margin-right:8px;">
+                        <path
+                            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                        </path>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>API Tester</h3>
+                <button class="close-modal">×</button>
+            </div>
+            <div class="modal-body" style="flex-direction: column; gap: 15px; padding: 20px; overflow-y: auto;">
+                <div class="api-row">
+                    <select id="api-method" class="custom-input" style="width: 120px;">
+                        <option>GET</option>
+                        <option>POST</option>
+                        <option>PUT</option>
+                        <option>DELETE</option>
+                    </select>
+                    <input type="text" id="api-url" class="custom-input" placeholder="https://api.example.com/endpoint"
+                        style="flex: 1;">
+                </div>
+                <div class="api-row">
+                    <label style="width: 100px;">Headers:</label>
+                    <textarea id="api-headers" class="custom-input" rows="3"
+                        placeholder='{"Content-Type": "application/json"}'></textarea>
+                </div>
+                <div class="api-row">
+                    <label style="width: 100px;">Body:</label>
+                    <textarea id="api-body" class="custom-input" rows="4" placeholder='{"key": "value"}'></textarea>
+                </div>
+                <button class="btn-primary" onclick="addonManager.sendAPIRequest()">Send Request</button>
+
+                <div class="api-response">
+                    <div
+                        style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <strong>Response:</strong>
+                        <button class="btn-sml btn-secondary" onclick="addonManager.sendAPIResponseToChat()">Send to
+                            Chat</button>
+                    </div>
+                    <div id="api-status" style="font-size: 0.9rem; color: #888; margin-bottom: 8px;">Ready</div>
+                    <pre id="api-response-body"
+                        style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; overflow-x: auto; max-height: 300px; font-size: 0.85rem;"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADDON: CSS Generators Modal -->
+    <div class="modal-overlay" id="cssgenerators-modal">
+        <div class="modal-content glass-panel" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="vertical-align:middle;margin-right:8px;">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="3" y1="9" x2="21" y2="9"></line>
+                        <line x1="9" y1="21" x2="9" y2="9"></line>
+                    </svg>CSS Generators</h3>
+                <button class="close-modal">×</button>
+            </div>
+            <div class="modal-body" style="flex-direction: column; padding: 0;">
+                <div class="css-gen-tabs">
+                    <button class="css-gen-tab active" data-gen="gradient">Gradient</button>
+                    <button class="css-gen-tab" data-gen="shadow">Box Shadow</button>
+                    <button class="css-gen-tab" data-gen="flexbox">Flexbox</button>
+                </div>
+
+                <!-- Gradient Generator -->
+                <div class="css-gen-panel active" id="gen-gradient">
+                    <div class="gen-controls">
+                        <label>Start Color: <input type="color" id="grad-start" value="#6366f1"></label>
+                        <label>End Color: <input type="color" id="grad-end" value="#ec4899"></label>
+                        <label>Angle: <input type="range" id="grad-angle" min="0" max="360" value="90"> <span
+                                id="grad-angle-val">90°</span></label>
+                    </div>
+                    <div id="grad-preview" style="width: 100%; height:150px; border-radius: 12px;"></div>
+                    <div class="gen-output">
+                        <code id="grad-code">background: linear-gradient(90deg, #6366f1, #ec4899);</code>
+                        <button class="btn-sml btn-primary" onclick="addonManager.copyCSSCode('grad')">Copy</button>
+                        <button class="btn-sml btn-secondary" onclick="addonManager.sendCSSToChat('grad')">Send</button>
+                    </div>
+                </div>
+
+                <!-- Box Shadow Generator -->
+                <div class="css-gen-panel" id="gen-shadow">
+                    <div class="gen-controls">
+                        <label>X Offset: <input type="range" id="shadow-x" min="-50" max="50" value="0"> <span
+                                id="shadow-x-val">0px</span></label>
+                        <label>Y Offset: <input type="range" id="shadow-y" min="-50" max="50" value="4"> <span
+                                id="shadow-y-val">4px</span></label>
+                        <label>Blur: <input type="range" id="shadow-blur" min="0" max="100" value="10"> <span
+                                id="shadow-blur-val">10px</span></label>
+                        <label>Spread: <input type="range" id="shadow-spread" min="-50" max="50" value="0"> <span
+                                id="shadow-spread-val">0px</span></label>
+                        <label>Color: <input type="color" id="shadow-color" value="#000000"></label>
+                        <label>Opacity: <input type="range" id="shadow-opacity" min="0" max="100" value="25"> <span
+                                id="shadow-opacity-val">0.25</span></label>
+                    </div>
+                    <div id="shadow-preview"
+                        style="width: 200px; height:200px; background: white; margin: 20px auto; border-radius: 12px;">
+                    </div>
+                    <div class="gen-output">
+                        <code id="shadow-code">box-shadow: 0px 4px 10px rgba(0,0,0,0.25);</code>
+                        <button class="btn-sml btn-primary" onclick="addonManager.copyCSSCode('shadow')">Copy</button>
+                        <button class="btn-sml btn-secondary"
+                            onclick="addonManager.sendCSSToChat('shadow')">Send</button>
+                    </div>
+                </div>
+
+                <!-- Flexbox Generator -->
+                <div class="css-gen-panel" id="gen-flexbox">
+                    <div class="gen-controls">
+                        <label>Direction:
+                            <select id="flex-dir" class="custom-input">
+                                <option value="row">Row</option>
+                                <option value="column">Column</option>
+                            </select>
+                        </label>
+                        <label>Justify:
+                            <select id="flex-justify" class="custom-input">
+                                <option value="flex-start">Start</option>
+                                <option value="center">Center</option>
+                                <option value="flex-end">End</option>
+                                <option value="space-between">Space Between</option>
+                                <option value="space-around">Space Around</option>
+                            </select>
+                        </label>
+                        <label>Align Items:
+                            <select id="flex-align" class="custom-input">
+                                <option value="flex-start">Start</option>
+                                <option value="center">Center</option>
+                                <option value="flex-end">End</option>
+                                <option value="stretch">Stretch</option>
+                            </select>
+                        </label>
+                        <label>Gap: <input type="range" id="flex-gap" min="0" max="50" value="10"> <span
+                                id="flex-gap-val">10px</span></label>
+                    </div>
+                    <div id="flex-preview"
+                        style="display:flex; width: 100%; height:150px; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 10px;">
+                        <div style="width:60px; height:60px; background: #6366f1; border-radius: 8px;"></div>
+                        <div style="width:60px; height:60px; background: #ec4899; border-radius: 8px;"></div>
+                        <div style="width:60px; height:60px; background: #10b981; border-radius: 8px;"></div>
+                    </div>
+                    <div class="gen-output">
+                        <code
+                            id="flex-code">display: flex; flex-direction: row; justify-content: flex-start; align-items: flex-start; gap: 10px;</code>
+                        <button class="btn-sml btn-primary" onclick="addonManager.copyCSSCode('flex')">Copy</button>
+                        <button class="btn-sml btn-secondary" onclick="addonManager.sendCSSToChat('flex')">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADDON: Code Playground Modal -->
+    <div class="modal-overlay" id="playground-modal">
+        <div class="modal-content glass-panel" style="max-width: 95vw; max-height: 90vh;">
+            <div class="modal-header">
+                <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="vertical-align:middle;margin-right:8px;">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>Code Playground</h3>
+                <button class="close-modal">×</button>
+            </div>
+            <div class="modal-body playground-body">
+                <div class="playground-editors">
+                    <div class="editor-panel">
+                        <div class="editor-header">HTML</div>
+                        <textarea id="html-editor" class="code-editor" placeholder="<h1>Hello World</h1>"></textarea>
+                    </div>
+                    <div class="editor-panel">
+                        <div class="editor-header">CSS</div>
+                        <textarea id="css-editor" class="code-editor" placeholder="h1 { color: blue; }"></textarea>
+                    </div>
+                    <div class="editor-panel">
+                        <div class="editor-header">JavaScript</div>
+                        <textarea id="js-editor" class="code-editor" placeholder="console.log('Hello');"></textarea>
+                    </div>
+                </div>
+                <div class="playground-preview">
+                    <div class="preview-header">
+                        <span>Preview</span>
+                        <button class="btn-sml btn-secondary" onclick="addonManager.sendPlaygroundToChat()">Send to
+                            Chat</button>
+                    </div>
+                    <iframe id="playground-iframe"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADDON: API Tester Modal -->
+    <div class="modal-overlay" id="api-modal">
+        <div class="modal-content glass-panel" style="max-width: 800px; max-height: 80vh;">
+            <div class="modal-header">
+                <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="vertical-align:middle;margin-right:8px;">
+                        <path
+                            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                        </path>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>API Tester</h3>
+                <button class="close-modal">×</button>
+            </div>
+            <div class="modal-body" style="flex-direction: column; gap: 15px; padding: 20px; overflow-y: auto;">
+                <div class="api-row">
+                    <select id="api-method" class="custom-input" style="width: 120px;">
+                        <option>GET</option>
+                        <option>POST</option>
+                        <option>PUT</option>
+                        <option>DELETE</option>
+                    </select>
+                    <input type="text" id="api-url" class="custom-input" placeholder="https://api.example.com/endpoint"
+                        style="flex: 1;">
+                </div>
+                <div class="api-row">
+                    <label style="width: 100px;">Headers:</label>
+                    <textarea id="api-headers" class="custom-input" rows="2"
+                        placeholder='{"Content-Type": "application/json"}'></textarea>
+                </div>
+                <div class="api-row">
+                    <label style="width: 100px;">Body:</label>
+                    <textarea id="api-body" class="custom-input" rows="3" placeholder='{"key": "value"}'></textarea>
+                </div>
+                <button class="btn-primary" onclick="addonManager.sendAPIRequest()">Send Request</button>
+                <div class="api-response">
+                    <div
+                        style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <strong>Response:</strong>
+                        <button class="btn-sml btn-secondary" onclick="addonManager.sendAPIResponseToChat()">Send to
+                            Chat</button>
+                    </div>
+                    <div id="api-status" style="font-size: 0.9rem; color: #888; margin-bottom: 8px;">Ready</div>
+                    <pre id="api-response-body"
+                        style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; overflow-x: auto; max-height: 200px; font-size: 0.85rem;"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADDON: CSS Generators Modal -->
+    <div class="modal-overlay" id="cssgenerators-modal">
+        <div class="modal-content glass-panel" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="vertical-align:middle;margin-right:8px;">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="3" y1="9" x2="21" y2="9"></line>
+                        <line x1="9" y1="21" x2="9" y2="9"></line>
+                    </svg>CSS Generators</h3>
+                <button class="close-modal">×</button>
+            </div>
+            <div class="modal-body" style="flex-direction: column; padding: 0;">
+                <div class="css-gen-tabs">
+                    <button class="css-gen-tab active" data-gen="gradient">Gradient</button>
+                    <button class="css-gen-tab" data-gen="shadow">Box Shadow</button>
+                    <button class="css-gen-tab" data-gen="flexbox">Flexbox</button>
+                </div>
+
+                <!-- Gradient Generator -->
+                <div class="css-gen-panel active" id="gen-gradient">
+                    <div class="gen-controls">
+                        <label>Start Color: <input type="color" id="grad-start" value="#6366f1"></label>
+                        <label>End Color: <input type="color" id="grad-end" value="#ec4899"></label>
+                        <label>Angle: <input type="range" id="grad-angle" min="0" max="360" value="90"> <span
+                                id="grad-angle-val">90°</span></label>
+                    </div>
+                    <div id="grad-preview"
+                        style="width: 100%; height:120px; border-radius: 12px; background: linear-gradient(90deg, #6366f1, #ec4899);">
+                    </div>
+                    <div class="gen-output">
+                        <code id="grad-code">background: linear-gradient(90deg, #6366f1, #ec4899);</code>
+                        <button class="btn-sml btn-primary" onclick="addonManager.copyCSSCode('grad')">Copy</button>
+                        <button class="btn-sml btn-secondary" onclick="addonManager.sendCSSToChat('grad')">Send</button>
+                    </div>
+                </div>
+
+                <!-- Box Shadow Generator -->
+                <div class="css-gen-panel" id="gen-shadow">
+                    <div class="gen-controls">
+                        <label>X: <input type="range" id="shadow-x" min="-50" max="50" value="0"> <span
+                                id="shadow-x-val">0px</span></label>
+                        <label>Y: <input type="range" id="shadow-y" min="-50" max="50" value="4"> <span
+                                id="shadow-y-val">4px</span></label>
+                        <label>Blur: <input type="range" id="shadow-blur" min="0" max="100" value="10"> <span
+                                id="shadow-blur-val">10px</span></label>
+                        <label>Spread: <input type="range" id="shadow-spread" min="-50" max="50" value="0"> <span
+                                id="shadow-spread-val">0px</span></label>
+                        <label>Color: <input type="color" id="shadow-color" value="#000000"></label>
+                        <label>Opacity: <input type="range" id="shadow-opacity" min="0" max="100" value="25"> <span
+                                id="shadow-opacity-val">0.25</span></label>
+                    </div>
+                    <div id="shadow-preview"
+                        style="width: 150px; height:150px; background: white; margin: 20px auto; border-radius: 12px; box-shadow: 0px 4px 10px rgba(0,0,0,0.25);">
+                    </div>
+                    <div class="gen-output">
+                        <code id="shadow-code">box-shadow: 0px 4px 10px rgba(0,0,0,0.25);</code>
+                        <button class="btn-sml btn-primary" onclick="addonManager.copyCSSCode('shadow')">Copy</button>
+                        <button class="btn-sml btn-secondary"
+                            onclick="addonManager.sendCSSToChat('shadow')">Send</button>
+                    </div>
+                </div>
+
+                <!-- Flexbox Generator -->
+                <div class="css-gen-panel" id="gen-flexbox">
+                    <div class="gen-controls">
+                        <label>Direction:
+                            <select id="flex-dir" class="custom-input">
+                                <option value="row">Row</option>
+                                <option value="column">Column</option>
+                            </select>
+                        </label>
+                        <label>Justify:
+                            <select id="flex-justify" class="custom-input">
+                                <option value="flex-start">Start</option>
+                                <option value="center">Center</option>
+                                <option value="flex-end">End</option>
+                                <option value="space-between">Space Between</option>
+                            </select>
+                        </label>
+                        <label>Align:
+                            <select id="flex-align" class="custom-input">
+                                <option value="flex-start">Start</option>
+                                <option value="center">Center</option>
+                                <option value="flex-end">End</option>
+                                <option value="stretch">Stretch</option>
+                            </select>
+                        </label>
+                        <label>Gap: <input type="range" id="flex-gap" min="0" max="50" value="10"> <span
+                                id="flex-gap-val">10px</span></label>
+                    </div>
+                    <div id="flex-preview"
+                        style="display:flex; width: 100%; height:100px; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 10px; gap: 10px;">
+                        <div style="width:50px; height:50px; background: #6366f1; border-radius: 8px;"></div>
+                        <div style="width:50px; height:50px; background: #ec4899; border-radius: 8px;"></div>
+                        <div style="width:50px; height:50px; background: #10b981; border-radius: 8px;"></div>
+                    </div>
+                    <div class="gen-output">
+                        <code
+                            id="flex-code">display: flex; flex-direction: row; justify-content: flex-start; align-items: flex-start; gap: 10px;</code>
+                        <button class="btn-sml btn-primary" onclick="addonManager.copyCSSCode('flex')">Copy</button>
+                        <button class="btn-sml btn-secondary" onclick="addonManager.sendCSSToChat('flex')">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Scripts -->
+    <script src="script.js"></script>
+
+    <!-- Alarm Widget -->
+    <div id="alarm-widget" class="floating-widget">
+        <div class="widget-header">
+            <span style="display:flex;align-items:center;gap:8px;"><svg width="18" height="18" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg> Smart Alarm</span>
+            <button onclick="this.closest('.floating-widget').classList.remove('active')">×</button>
+        </div>
+        <div class="widget-body">
+            <input type="time" id="alarm-time" class="custom-input">
+            <button class="btn-primary" onclick="addonManager.setAlarm()">Set Alarm</button>
+            <div id="alarm-status" style="margin-top:10px; font-size:0.8rem; color:var(--text-secondary);">No alarm set
+            </div>
+        </div>
+    </div>
+
+    <!-- Sticky Notes Manager Widget -->
+    <div id="stickynotes-widget" class="floating-widget">
+        <div class="widget-header"><span style="display:flex;align-items:center;gap:8px;"><svg width="18" height="18"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg> Notes</span><button
+                onclick="this.closest('.floating-widget').classList.remove('active')">×</button></div>
+        <div class="widget-body" style="display:flex; gap:10px;">
+            <button class="btn-sml" style="background:#fef08a; color:black; width:30px; height:30px;"
+                onclick="addonManager.addSticky('#fef08a')"></button>
+            <button class="btn-sml" style="background:#fbcfe8; color:black; width:30px; height:30px;"
+                onclick="addonManager.addSticky('#fbcfe8')"></button>
+            <button class="btn-sml" style="background:#bae6fd; color:black; width:30px; height:30px;"
+                onclick="addonManager.addSticky('#bae6fd')"></button>
+        </div>
+    </div>
+
+    <!-- Sticky Note Template -->
+    <div id="sticky-container"></div>
+
+    <!-- Counter Widget -->
+    <div id="counter-widget" class="floating-widget">
+        <div class="widget-header"><span style="display:flex;align-items:center;gap:8px;"><svg width="18" height="18"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 9v4"></path>
+                    <path d="M12 17h.01"></path>
+                    <rect x="4" y="2" width="16" height="20" rx="2"></rect>
+                </svg> Counter</span><button
+                onclick="this.closest('.floating-widget').classList.remove('active')">×</button></div>
+        <div class="widget-body" style="text-align:center;">
+            <div id="counter-val" style="font-size:2.5rem; font-weight:bold; margin:15px 0;">0</div>
+            <div style="display:flex; gap:5px; justify-content:center;">
+                <button class="btn-sml btn-secondary" onclick="addonManager.updateCounter(-1)">-</button>
+                <button class="btn-sml btn-primary" onclick="addonManager.updateCounter(1)">+</button>
+                <button class="btn-sml btn-secondary" onclick="addonManager.updateCounter(0)">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stopwatch Widget -->
+    <div id="stopwatch-widget" class="floating-widget">
+        <div class="widget-header"><span style="display:flex;align-items:center;gap:8px;"><svg width="18" height="18"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                    <path d="M12 2v2"></path>
+                </svg> Stopwatch</span><button
+                onclick="this.closest('.floating-widget').classList.remove('active')">×</button></div>
+        <div class="widget-body" style="text-align:center;">
+            <div id="sw-display" style="font-size:2rem; font-family:monospace; margin:10px 0;">00:00:00</div>
+            <div style="display:flex; gap:5px; justify-content:center;">
+                <button class="btn-sml btn-primary" onclick="addonManager.toggleStopwatch()">Start/Stop</button>
+                <button class="btn-sml btn-secondary" onclick="addonManager.resetStopwatch()">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cursor Modal -->
+    <div class="modal-overlay" id="cursor-modal">
+        <div class="modal-content glass-panel" style="max-width:500px;">
+            <div class="modal-header">
+                <h3><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="vertical-align:middle;margin-right:8px;">
+                        <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path>
+                    </svg> Cursor Changer</h3><button class="close-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="cursor-grid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
+                    <button class="btn-secondary" onclick="addonManager.setCursor('default')">Default</button>
+                    <button class="btn-secondary" onclick="addonManager.setCursor('pointer')">Pointer</button>
+                    <button class="btn-secondary" onclick="addonManager.setCursor('crosshair')">Crosshair</button>
+                    <button class="btn-secondary" onclick="addonManager.setCursor('text')">Text</button>
+                    <button class="btn-secondary" onclick="addonManager.setCursor('move')">Move</button>
+                    <button class="btn-secondary" onclick="addonManager.setCursor('wait')">Wait</button>
+                    <button class="btn-secondary" onclick="addonManager.setCursor('help')">Help</button>
+                    <button class="btn-secondary" onclick="addonManager.setCursor('not-allowed')">Block</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Sounds Modal -->
+    <div class="modal-overlay" id="keysounds-modal">
+        <div class="modal-content glass-panel" style="max-width:400px;">
+            <div class="modal-header">
+                <h3><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="vertical-align:middle;margin-right:8px;">
+                        <path d="M2 12h20"></path>
+                        <path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6"></path>
+                        <path d="M22 6V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2"></path>
+                    </svg> Key Sounds</h3><button class="close-modal">×</button>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:15px;">
+                <label class="setting-row" style="justify-content:space-between; display:flex;">
+                    <span>Enable Sounds</span>
+                    <input type="checkbox" id="keysound-toggle" onchange="addonManager.toggleKeySounds(this.checked)">
+                </label>
+                <div class="sound-opts" style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button class="btn-secondary" onclick="addonManager.setKeySound('typewriter')">Typewriter</button>
+                    <button class="btn-secondary" onclick="addonManager.setKeySound('mechanical')">Mechanical</button>
+                    <button class="btn-secondary" onclick="addonManager.setKeySound('water')">Water</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen Effects Modal -->
+    <div class="modal-overlay" id="effects-modal">
+        <div class="modal-content glass-panel" style="max-width:400px;">
+            <div class="modal-header">
+                <h3><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="vertical-align:middle;margin-right:8px;">
+                        <path d="M12 2v4"></path>
+                        <path d="M12 18v4"></path>
+                        <path d="M4.93 4.93l2.83 2.83"></path>
+                        <path d="M16.24 16.24l2.83 2.83"></path>
+                        <path d="M2 12h4"></path>
+                        <path d="M18 12h4"></path>
+                        <path d="M4.93 19.07l2.83-2.83"></path>
+                        <path d="M16.24 7.76l2.83-2.83"></path>
+                    </svg> Screen Effects</h3><button class="close-modal">×</button>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:10px;">
+                <button class="btn-secondary full-width" onclick="addonManager.toggleEffect('rain')"><svg width="16"
+                        height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="vertical-align:middle;margin-right:6px;">
+                        <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>
+                        <line x1="8" y1="19" x2="8" y2="21"></line>
+                        <line x1="8" y1="13" x2="8" y2="15"></line>
+                        <line x1="16" y1="19" x2="16" y2="21"></line>
+                        <line x1="16" y1="13" x2="16" y2="15"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="12" y1="15" x2="12" y2="17"></line>
+                    </svg>Rain</button>
+                <button class="btn-secondary full-width" onclick="addonManager.toggleEffect('matrix')"><svg width="16"
+                        height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="vertical-align:middle;margin-right:6px;">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>Matrix</button>
+                <button class="btn-secondary full-width" onclick="addonManager.toggleEffect('confetti')"><svg width="16"
+                        height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="vertical-align:middle;margin-right:6px;">
+                        <polygon
+                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                        </polygon>
+                    </svg>Confetti</button>
+                <button class="btn-primary full-width" onclick="addonManager.toggleEffect('none')"><svg width="16"
+                        height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="vertical-align:middle;margin-right:6px;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </svg>Clear All</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Battery Widget -->
+    <div id="battery-widget" class="floating-widget" style="width: auto;">
+        <div class="widget-header"><span style="display:flex;align-items:center;gap:8px;"><svg width="18" height="18"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect>
+                    <line x1="23" y1="13" x2="23" y2="11"></line>
+                </svg> System</span><button
+                onclick="this.closest('.floating-widget').classList.remove('active')">×</button></div>
+        <div class="widget-body" style="font-size:0.9rem; padding:15px;">
+            <div id="battery-level" style="font-size:1.2rem; font-weight:bold; margin-bottom:5px;">Checking...</div>
+            <div id="system-time" style="color:var(--text-secondary);">00:00:00</div>
+        </div>
+    </div>
+
+    <!-- Dice Widget -->
+    <div id="dice-widget" class="floating-widget">
+        <div class="widget-header"><span style="display:flex;align-items:center;gap:8px;"><svg width="18" height="18"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="12" cy="12" r="2"></circle>
+                    <circle cx="8" cy="8" r="2"></circle>
+                    <circle cx="16" cy="16" r="2"></circle>
+                </svg> Dice</span><button
+                onclick="this.closest('.floating-widget').classList.remove('active')">×</button></div>
+        <div class="widget-body" style="text-align:center;">
+            <div id="dice-result" style="font-size:4rem; margin:10px; min-height:60px;"><svg width="64" height="64"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="12" cy="12" r="1.5"></circle>
+                    <circle cx="8" cy="8" r="1.5"></circle>
+                    <circle cx="16" cy="16" r="1.5"></circle>
+                    <circle cx="16" cy="8" r="1.5"></circle>
+                    <circle cx="8" cy="16" r="1.5"></circle>
+                </svg></div>
+            <button class="btn-primary" onclick="addonManager.rollDice()">Roll</button>
+        </div>
+    </div>
+
+    <!-- Effect Container -->
+    <canvas id="effect-canvas"
+        style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:9000; display:none;"></canvas>
+
+    <!-- Reading Mode Overlay -->
+    <div id="reading-guide"
+        style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); pointer-events:none; z-index:9999; display:none;">
+        <div id="reading-line"
+            style="width:100%; height:100px; background:rgba(255,255,255,0.05); border-top:1px solid rgba(255,255,255,0.2); border-bottom:1px solid rgba(255,255,255,0.2); position:absolute; top:50%; transform:translateY(-50%); box-shadow: 0 0 100px rgba(0,0,0,0.8);">
+        </div>
+    </div>
+    <div id="reading-mode-off" style="position:fixed; bottom:20px; right:20px; z-index:10000; display:none;">
+        <button class="btn-primary" onclick="addonManager.toggleReadingMode(false)">Exit Reading Mode</button>
+    </div>
+    <!-- Load all module scripts first (order matters!) -->
+    <script src="modules/StorageSystem.js"></script>
+    <script src="modules/AudioVisualizer.js"></script>
+    <script src="modules/PhysicsEngine.js"></script>
+    <script src="modules/MessageParser.js"></script>
+    <script src="modules/SettingsModal.js"></script>
+    <script src="modules/AiToolsSheet.js"></script>
+    <script src="modules/ProjectManager.js"></script>
+    <script src="modules/CloudIntegrations.js"></script>
+    <script src="modules/GeminiManager.js"></script>
+    <script src="modules/SupabaseManager.js"></script>
+    <!-- Main Application Script -->
+    <script src="main.js"></script>
+</body>
+
+</html>
